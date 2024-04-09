@@ -1,0 +1,283 @@
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global"
+                 controller="EI_EWI_PayUndisputedFunds_class">
+	<aura:attribute name="showcheckboxsection" type="boolean" default="false" />
+    <aura:attribute name="showPopUp" type="boolean" default="false" />
+    <aura:attribute name="recordId" type="Id" />
+    <aura:attribute name="amounttoagll" type="integer" />
+    <aura:attribute name="caseList" type="List" />
+    <aura:attribute name="amounttotenant" type="integer" />
+    <aura:attribute name="amountTotal" type="integer" />
+    <aura:attribute name="CaseRec" type="Case" />
+    <aura:attribute name="caseObject" type="Case" default="{sObjectType:'Case'}"/>
+    <aura:attribute name="showmodel" type="boolean" default="false" />
+    <aura:attribute name="showamount" type="decimal"  />
+    <aura:attribute name="disableButton" type="boolean" default= "false"  />
+    <aura:attribute name="showReadOnlyField" type="boolean" default= "false"  />
+    <aura:attribute name="undisputedAmountToAgentLandlord" type="Decimal"   />
+    <aura:attribute name="undisputedAmountToTenant" type="boolean" default= "false"  />
+    <aura:handler name="init" value="{!this}" action="{!c.doinit}"/>
+    
+
+    
+    
+    
+    <aura:if isTrue="{!v.showcheckboxsection}">
+        <div style="background-color:white;">
+            <div class="form-group row maindiv" styleid="maindiv1">
+                <div class="slds-col slds-size_1-of-13 slds-p-right_x-small">
+                    <h4><b>Pay undisputed funds : 
+                        <span>
+                            <lightning:formattedNumber value="{!v.showamount}" style="currency" currencyCode="GBP" minimumFractionDigits="2" maximumFractionDigits="2"/>
+                        </span></b></h4><br/>
+                    <b>Amount to agent/landlord</b>
+                    <lightning:input  style="width: 255px !important;bottom: 1rem" type="number" aura:id="field" value="{!v.amounttoagll}" name="amounttoagll"   formatter="currency" step="0.01" placeholder="£0.00"/>
+                    
+                    <b>Amount to tenant(s)</b>
+                    <lightning:input style="width: 255px !important; bottom: 1rem" type="number" aura:id="field" value="{!v.amounttotenant}"  name="amounttotenant"  formatter="currency" step="0.01" placeholder="£0.00"/>
+                    
+                    <lightning:button aura:id="backToTenantComp"
+                                      variant="brand"
+                                      label="Submit"
+                                      onclick="{!c.submitController }"/>
+                    
+                </div>
+            </div>
+        </div>
+    </aura:if>
+    
+     <aura:if isTrue="{!v.showReadOnlyField}"> 
+        <div style="background-color:white;">
+            <div class="form-group row maindiv" styleid="maindiv1">
+                <div class="slds-col slds-size_1-of-13 slds-p-right_x-small">
+                    <h4><b>undisputed funds released : 
+                        </b></h4><br/>
+                    <b>Amount to agent/landlord</b>
+                    <lightning:input  style="width: 255px !important;bottom: 1rem" disabled = "true" type="number" aura:id="field" value="{!v.undisputedAmountToAgentLandlord}" name="amounttoagll"   formatter="currency" step="0.01" placeholder="£0.00"/>
+                    
+                    <b>Amount to tenant(s)</b>
+                    <lightning:input style="width: 255px !important; bottom: 1rem" disabled = "true" type="number" aura:id="field" value="{!v.undisputedAmountToTenant}"  name="amounttotenant"  formatter="currency" step="0.01" placeholder="£0.00"/>
+                    
+                </div>
+            </div>
+        </div>
+    </aura:if>
+    
+    <!--Use aura:if tag to display/hide popup based on isModalOpen value--> 
+    <aura:if isTrue="{!v.showPopUp}">
+        
+        <!-- Modal/Popup Box starts here-->
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <!-- Modal/Popup Box Header Starts here-->
+                <header class="slds-modal__header">
+                    <lightning:buttonIcon iconName="utility:close"
+                                          onclick="{! c.closeModel }"
+                                          alternativeText="close"
+                                          variant="bare-inverse"
+                                          class="slds-modal__close"/>
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate"></h2>
+                </header>
+                <!--Modal/Popup Box Body Starts here-->
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <p><b style="text-align: center;">Are you sure you want to instruct finance to make the payments as per the above figures?
+                        </b>
+                    </p>
+                </div>
+                <!--Modal/Popup Box Footer Starts here-->
+                <footer class="slds-modal__footer">
+                    <div class="slds-grid slds-grid_align-center">
+                        
+                        <lightning:button variant="brand"
+                                          label="Yes"
+                                          title="Yes"
+                                          disabled = "{!v.disableButton}"
+                                          onclick="{! c.yesbutton }"/>
+                        <lightning:button variant="brand"
+                                          label="No"
+                                          title="No"
+                                           disabled = "{!v.disableButton}"
+                                          onclick="{!c.nobutton}"/>
+                        
+                    </div>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </aura:if>
+</aura:component>
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+({
+    
+    doinit :function(component, event, helper){
+         var recordId =component.get("v.recordId");
+        // create a one-time use instance of the serverEcho action
+        // in the server-side controller
+        var action = component.get("c.getCaserecord");
+        action.setParams({"caseId":recordId});
+        
+        // Create a callback that is executed after 
+        // the server-side action returns
+        action.setCallback(this, function(response) {
+            var state = response.getState();
+            if (state === "SUCCESS") {
+                var result = response.getReturnValue();
+                if(result.Undisputed_fund_released_amount__c != undefined && result.Undisputed_fund_released_amount__c !=null && result.Undisputed_fund_released_amount__c !=''){
+               
+                component.set("v.showamount",(result.Undisputed_Funds_Received__c - result.Undisputed_fund_released_amount__c));
+                if(result.Evidence_Gathering_Start_Date__c !=null && result.Undisputed_Funds_Received__c>0){
+                    if(((result.Undisputed_Funds_Received__c + result.Total_amount_in_dispute__c) < result.Total_Deposit__c) 
+                       && result.Undisputed_funds_genarated__c == false){
+                        component.set("v.showcheckboxsection" , true);
+                    }
+               else if(result.Undisputed_funds_genarated__c == true && (result.Undisputed_Funds_Received__c> result.Undisputed_fund_released_amount__c) 
+                       && ((result.Undisputed_Funds_Received__c + result.Total_amount_in_dispute__c) <= result.Total_Deposit__c) 
+                       ){
+                        component.set("v.showcheckboxsection" , true);
+                    }
+                   else{
+                       component.set("v.showcheckboxsection" , false);
+                   }
+                    var checkpaymentrelease = component.get("v.showcheckboxsection");
+                    if(result.Undisputed_funds_genarated__c == true && result.Undisputed_fund_released_amount__c>0 && checkpaymentrelease == false){
+                     component.set("v.showReadOnlyField" , true);  
+                        if(result.Amount_Awarded_to_Agent__c){
+                         component.set("v.undisputedAmountToAgentLandlord",result.Amount_Awarded_to_Agent__c );
+                        }
+                        if(result.Amount_Awarded_to_Tenant__c){
+                        component.set("v.undisputedAmountToTenant",result.Amount_Awarded_to_Tenant__c );    
+                        }
+                      
+                    }
+                    else{
+                     component.set("v.showReadOnlyField" , false);     
+                    }
+    
+                    
+                }
+                }
+            }
+            else if (state === "INCOMPLETE") {
+                // do something
+            }
+                else if (state === "ERROR") {
+                    var errors = response.getError();
+                    if (errors) {
+                        if (errors[0] && errors[0].message) {
+                            console.log("Error message: " + 
+                                        errors[0].message);
+                        }
+                    } else {
+                        console.log("Unknown error");
+                    }
+                }
+        });
+        
+        // optionally set storable, abortable, background flag here
+        
+        // A client-side action could cause multiple events, 
+        // which could trigger other events and 
+        // other server-side action calls.
+        // $A.enqueueAction adds the server-side action to the queue.
+        $A.enqueueAction(action);
+    },
+    
+    submitController :function(component, event, helper){
+        var recordId =component.get("v.recordId");
+        var amounttoagll =component.get("v.amounttoagll");
+        var amounttotenant =component.get("v.amounttotenant");
+        if(amounttoagll==null || amounttoagll ==''|| amounttoagll=='undefined'){
+            component.set("v.amounttoagll", 0.00);
+        }
+        if(amounttotenant==null || amounttotenant =='' ||amounttotenant=='undefined'){
+            component.set("v.amounttotenant", 0.00);
+        }
+        //var amountTotal=parseInt(component.get("v.amounttoagll"))+parseInt(component.get("v.amounttotenant"));        
+        var amountTotal=parseFloat(component.get("v.amounttoagll"))+parseFloat(component.get("v.amounttotenant"));   
+        var action = component.get("c.getCaserecord");
+        action.setParams({"caseId":recordId});
+        
+        action.setCallback(this, function(a) { 
+            var state = a.getState();
+            var errors = a.getError();
+            if (state == "SUCCESS") {
+              
+                var result = a.getReturnValue();
+                if(((result.Undisputed_Funds_Received__c-result.Undisputed_fund_released_amount__c) < amountTotal)||((result.Undisputed_Funds_Received__c-result.Undisputed_fund_released_amount__c) > amountTotal)){
+                    var toastEvent = $A.get("e.force:showToast");
+                    toastEvent.setParams({
+                        title : 'Error',
+                        message:'You cannot release more/less than the sum  held undisputed funds.',
+                        duration:'5000',
+                        key: 'info_alt',
+                        type: 'error',
+                        mode: 'pester'
+                    });
+                    toastEvent.fire();
+                }
+                else if((result.Undisputed_Funds_Received__c -result.Undisputed_fund_released_amount__c) == amountTotal){
+                    component.set("v.showPopUp", true );
+                }
+                
+            }            
+        });
+        $A.enqueueAction(action);
+    },
+    
+    closeModel: function(cmp, evt) {
+        cmp.set("v.showPopUp", false);  
+        $A.get('e.force:refreshView').fire();
+    },
+    
+    nobutton : function(cmp, evt) {
+        cmp.set("v.showPopUp", false);
+        $A.get('e.force:refreshView').fire();
+    },
+    
+    yesbutton : function(component, event,helper) {
+        component.set("v.disableButton",true);
+        var amounttoagll = component.get("v.amounttoagll");
+        var amounttotenant = component.get("v.amounttotenant");
+        var action = component.get("c.insertInstallment");
+        action.setParams({
+            caseId: component.get("v.recordId"), "agllamount":amounttoagll,"TTamount":amounttotenant
+            
+        });
+        action.setCallback(this, function(a) { 
+            var state = a.getState();
+            var errors = a.getError();
+            if (state == "SUCCESS") {
+                var result = a.getReturnValue();
+                if(result){
+                    component.set("v.showPopUp", false);
+                    $A.get('e.force:refreshView').fire();
+                    
+                    var toastEvent = $A.get("e.force:showToast");
+                    toastEvent.setParams({
+                        title : 'Success Message',
+                        message: 'Payment is created successfully.',
+                        duration:' 5000',
+                        key: 'info_alt',
+                        type: 'success',
+                        mode: 'pester'
+                    });
+                    toastEvent.fire();
+                    location.reload();
+                    
+                }
+                
+            }
+            else {
+                
+            }
+        });
+        $A.enqueueAction(action);
+        
+    }
+    
+  
+})
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
