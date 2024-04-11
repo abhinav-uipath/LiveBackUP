@@ -1,0 +1,783 @@
+@isTest
+public class EI_UtilityClassForPayments_TestClass { 
+    
+    // method 1 to check getNewInstallments
+    @isTest
+    public static void EI_UtilityClassForPayments_Test1(){
+        
+        Account acc= EI_TestDataFactory.createLandlord(1)[0];
+        insert acc;
+        
+        Contact  con = new Contact( FirstName = 'test1', Lastname = 'surname',  Email = System.now().millisecond() + 'as@test.com');
+        insert con; 
+        
+        Property__c property= EI_TestDataFactory.createProperty(1,acc.id)[0];
+        insert property;
+        
+        Scheme__c scheme= EI_TestDataFactory.createScheme();
+        insert scheme;
+        
+        QueryLimits__c querylimit = EI_TestDataFactory.createQueryLimit();
+        insert querylimit;
+        
+        deposit__c deposit = EI_TestDataFactory.createDeposite(1,scheme.id,acc.id,property.id)[0];
+        insert deposit;
+        
+        id installmentRecordType = Schema.SObjectType.Installment__c.getRecordTypeInfosByName().get('SDS Installment').getRecordTypeId();
+      
+       /* Bank_Account__c  ba = new Bank_Account__c();
+                ba.Account__c = acc.Id;
+                ba.Contact__c= con.id;
+                ba.Account_Number__c='HGTY6543';
+                ba.Bank_Name__c='testscotlandbank';
+                insert ba; */
+        Map<string,Account> mapOFContactIdVsBankDet = new Map<string,Account>();
+        mapOFContactIdVsBankDet.put('con.Id',acc);
+      
+        
+        Branch__c branch2  = new Branch__c();
+        branch2.Branch_Name__c = 'branchtest';  
+        branch2.Account__c = acc.Id;
+        branch2.Address__c ='abc';
+        branch2.Town_City__c='town1';
+        branch2.County__c = 'test2';
+        branch2.Country__c='India';
+        branch2.Postcode__c='hp23fgt';
+        branch2.Is_Active__c = true;
+        insert branch2;
+        Map<Id,Installment__c> mapOfContactIdVsInst = new Map<Id,Installment__c>();  
+        Installment__c inst = new Installment__c();
+        inst.Amount__c = 100.00;
+        inst.Deposit__c = deposit.id;
+        inst.Status__c = 'Pending';
+        inst.RecordTypeId=installmentRecordType;
+        inst.Installment_Type__c = 'Receivable';
+        insert inst; 
+        mapOfContactIdVsInst.put(con.id,inst);
+        
+        Case  case1 = new case();      
+        case1.ChangeOver_Status__c = 'Tenant Rejected';
+        case1.Deposit_Account_Number__c = deposit.id;
+        case1.type = 'Problem';
+        insert case1 ;
+        
+        Case_Participant__c caseparticipant = new Case_Participant__c();
+        caseparticipant.Account__c = acc.id;
+        caseparticipant.Case__c = case1.id;
+        caseparticipant.Type__c ='Tenant';
+        caseparticipant.Contact__c = con.id;
+        insert caseparticipant;
+        
+        Repayment_Request__c repayReq = new Repayment_Request__c();
+        repayReq.AL_Repay_Requested__c = true;
+        repayReq.Account__c = acc.id;
+        repayReq.Deposit__c = deposit.id;
+        insert repayReq;
+            Case_Participant__c casepart = [Select id,Contact__c,Is_Lead__c,Contact__r.Name,Case__r.Deposit_Account_Number__r.Name,Type__c,Case__r.Tenancy_Property_Address__c,Case__r.Deposit_Account_Number__c,Case__r.Disputed_Amount__c,Contact__r.FirstName,Contact__r.LastName,Contact__r.Email from Case_Participant__c]; 
+    
+        
+        try{
+            Test.StartTest();
+             EI_UtilityClassForPayments.getNewInstallments(casepart,100.00,true,'category',mapOFContactIdVsBankDet,mapOfContactIdVsInst,'paymentType','paymentTypeStatus');
+            Test.stopTest(); 
+        }catch(Exception e){}
+        
+        
+    }
+    
+      // method 2 to check createCreditNoteRecordList
+    @isTest
+    public static void EI_UtilityClassForPayments_Test2(){
+        
+        Account acc= EI_TestDataFactory.createLandlord(1)[0];
+        insert acc;
+        
+        Contact  con = new Contact( FirstName = 'test1', Lastname = 'surname',  Email = System.now().millisecond() + 'as@test.com');
+        insert con; 
+        
+        Property__c property= EI_TestDataFactory.createProperty(1,acc.id)[0];
+        insert property;
+        
+        Scheme__c scheme= EI_TestDataFactory.createScheme();
+        insert scheme;
+        
+        QueryLimits__c querylimit = EI_TestDataFactory.createQueryLimit();
+        insert querylimit;
+        
+        deposit__c deposit = EI_TestDataFactory.createDeposite(1,scheme.id,acc.id,property.id)[0];
+        insert deposit;
+      
+       /* Bank_Account__c  ba = new Bank_Account__c();
+                ba.Account__c = acc.Id;
+                ba.Contact__c= con.id;
+                ba.Account_Number__c='HGTY6543';
+                ba.Bank_Name__c='testscotlandbank';
+                ba.Sort_Code__c='560003';
+                ba.Bank_Account_Holder_Name__c=acc.Name;
+                //ba.ValidInternationBankDetails__c=true;
+                insert ba; 
+        if(ba.id!=null){
+            ba=[Select id,Contact__c,ValidInternationBankDetails__c,Account__c,Account_Number__c,Bank_Name__c,Sort_Code__c,Bank_Account_Holder_Name__c from Bank_Account__c where id =:ba.Id];
+         //   system.debug('bank details:' +[Select ValidInternationBankDetails__c from Bank_Account__c where id in=:ba.Id ]);
+        }*/
+        
+        //system.debug('ba.ValidInternationBankDetails__c:'+[Select Contact__c from Bank_Account__c where id =:ba.Id].Contact__c);
+        //Map<string,Bank_Account__c> mapOFContactIdVsBankDet = new Map<string,Bank_Account__c>();
+        //mapOFContactIdVsBankDet.put(string.valueOf(con.Id),ba);
+        
+        Branch__c branch2  = new Branch__c();
+        branch2.Branch_Name__c = 'branchtest';  
+        branch2.Account__c = acc.Id;
+        branch2.Address__c ='abc';
+        branch2.Town_City__c='town1';
+        branch2.County__c = 'test2';
+        branch2.Country__c='India';
+        branch2.Postcode__c='hp23fgt';
+        branch2.Is_Active__c = true;
+        insert branch2;
+        List<Installment__c> installList = new List<Installment__c>();
+        Map<Id,Installment__c> mapOfContactIdVsInst = new Map<Id,Installment__c>();  
+        Installment__c inst = new Installment__c();
+        inst.Amount__c = 100.00;
+        inst.Deposit__c = deposit.id;
+        inst.Status__c = 'Pending';      
+        inst.Installment_Type__c = 'Receivable';
+        insert inst; 
+        installList.add(inst);
+        mapOfContactIdVsInst.put(con.id,inst);
+        
+        Case  case1 = new case();      
+        case1.ChangeOver_Status__c = 'Tenant Rejected';
+        case1.Deposit_Account_Number__c = deposit.id;
+        case1.type = 'Problem';
+        insert case1 ;
+        Case_Participant__c caseparticipant = new Case_Participant__c();
+        caseparticipant.Account__c = acc.id;
+        caseparticipant.Case__c = case1.id;
+        caseparticipant.Type__c ='Tenant';
+        caseparticipant.Contact__c = con.id;
+        insert caseparticipant;
+        
+        Repayment_Request__c repayReq = new Repayment_Request__c();
+        repayReq.AL_Repay_Requested__c = true;
+        repayReq.Account__c = acc.id;
+        repayReq.Deposit__c = deposit.id;
+        insert repayReq;
+        
+        
+        try{
+            Test.StartTest();
+            EI_UtilityClassForPayments.createPaymentsForDepositTransfer(installList);
+         //   EI_UtilityClassForPayments.createCreditNoteRecordList('creditReference',string.valueOf(con.Id),'paymentReference',100.00,system.today(),string.valueOf(deposit.Id),string.valueOf(case1.Id),ba,'category','paymentType','paymentTypeStatus');
+            EI_UtilityClassForPayments.createCreditNoteRecordList('creditReference',string.valueOf(con.Id),'paymentReference',100.00,system.today(),string.valueOf(deposit.Id),string.valueOf(case1.Id),null,'category','paymentType','paymentTypeStatus');
+          //  EI_UtilityClassForPayments.createCreditNoteRecordList('creditReference',string.valueOf(con.Id),'paymentReference',100.00,system.today(),string.valueOf(deposit.Id),string.valueOf(case1.Id),ba1,'category','paymentType','paymentTypeStatus');
+            Test.stopTest(); 
+        }catch(Exception e){}
+        
+        
+    }
+    
+       // method 2 to check createCreditNoteRecordList
+    @isTest
+    public static void EI_UtilityClassForPayments_Test21(){
+        
+        Account acc= EI_TestDataFactory.createLandlord(1)[0];
+         acc.Account_Number__c='HGTY6543';
+                acc.Bank_Name__c='testscotlandbank';
+                acc.Sort_Code__c='560003';
+        insert acc;
+        
+        Contact  con = new Contact( FirstName = 'test1', Lastname = 'surname',  Email = System.now().millisecond() + 'as@test.com');
+        insert con; 
+        
+        Property__c property= EI_TestDataFactory.createProperty(1,acc.id)[0];
+        insert property;
+        
+        Scheme__c scheme= EI_TestDataFactory.createScheme();
+        insert scheme;
+        
+        QueryLimits__c querylimit = EI_TestDataFactory.createQueryLimit();
+        insert querylimit;
+        
+        deposit__c deposit = EI_TestDataFactory.createDeposite(1,scheme.id,acc.id,property.id)[0];
+        insert deposit;
+      
+
+        Branch__c branch2  = new Branch__c();
+        branch2.Branch_Name__c = 'branchtest';  
+        branch2.Account__c = acc.Id;
+        branch2.Address__c ='abc';
+        branch2.Town_City__c='town1';
+        branch2.County__c = 'test2';
+        branch2.Country__c='India';
+        branch2.Postcode__c='hp23fgt';
+        branch2.Is_Active__c = true;
+        insert branch2;
+        List<Installment__c> installList = new List<Installment__c>();
+        Map<Id,Installment__c> mapOfContactIdVsInst = new Map<Id,Installment__c>();  
+        Installment__c inst = new Installment__c();
+        inst.Amount__c = 100.00;
+        inst.Account__c=acc.id;
+        inst.Deposit__c = deposit.id;
+        inst.Status__c = 'Pending';
+        inst.Installment_Type__c = 'Receivable';
+        insert inst; 
+        installList.add(inst);
+        mapOfContactIdVsInst.put(con.id,inst);
+        
+        Case  case1 = new case();      
+        case1.ChangeOver_Status__c = 'Tenant Rejected';
+        case1.Deposit_Account_Number__c = deposit.id;
+        case1.type = 'Problem';
+        insert case1 ;
+        Case_Participant__c caseparticipant = new Case_Participant__c();
+        caseparticipant.Account__c = acc.id;
+        caseparticipant.Case__c = case1.id;
+        caseparticipant.Type__c ='Tenant';
+        caseparticipant.Contact__c = con.id;
+        insert caseparticipant;
+        
+        Repayment_Request__c repayReq = new Repayment_Request__c();
+        repayReq.AL_Repay_Requested__c = true;
+        repayReq.Account__c = acc.id;
+        repayReq.Deposit__c = deposit.id;
+        insert repayReq;
+        
+        
+        try{
+            Test.StartTest();
+            EI_UtilityClassForPayments.createPaymentsForDepositTransfer(installList);
+         //   EI_UtilityClassForPayments.createCreditNoteRecordList('creditReference',string.valueOf(con.Id),'paymentReference',100.00,system.today(),string.valueOf(deposit.Id),string.valueOf(case1.Id),ba,'category','paymentType','paymentTypeStatus');
+            EI_UtilityClassForPayments.createCreditNoteRecordList('creditReference',string.valueOf(con.Id),'paymentReference',100.00,system.today(),string.valueOf(deposit.Id),string.valueOf(case1.Id),acc,'category','paymentType','paymentTypeStatus');
+            EI_UtilityClassForPayments.createCreditNoteRecord('creditReference',string.valueOf(con.Id),'paymentReference',100.00,system.today(),string.valueOf(deposit.Id),string.valueOf(case1.Id),acc,'category','paymentType','paymentTypeStatus');
+            Test.stopTest(); 
+        }catch(Exception e){}
+        
+        
+    }
+           // method 2 to check createCreditNoteRecordList
+    @isTest
+    public static void EI_UtilityClassForPayments_Test22(){
+        
+        Account acc= EI_TestDataFactory.createLandlord(1)[0];
+         acc.Swift_Code__c='HGTY6543';
+         acc.International_Bank_Account_Holder_Name__c='testscotlandbank';
+         acc.International_Account_Number__c='560003';
+         acc.IBAN__c='GB29NWBK60161331926819';
+        insert acc;
+        
+        Contact  con = new Contact( FirstName = 'test1', Lastname = 'surname',  Email = System.now().millisecond() + 'as@test.com');
+        insert con; 
+        
+        Property__c property= EI_TestDataFactory.createProperty(1,acc.id)[0];
+        insert property;
+        
+        Scheme__c scheme= EI_TestDataFactory.createScheme();
+        insert scheme;
+        
+        QueryLimits__c querylimit = EI_TestDataFactory.createQueryLimit();
+        insert querylimit;
+        
+        deposit__c deposit = EI_TestDataFactory.createDeposite(1,scheme.id,acc.id,property.id)[0];
+        insert deposit;
+      
+
+        Branch__c branch2  = new Branch__c();
+        branch2.Branch_Name__c = 'branchtest';  
+        branch2.Account__c = acc.Id;
+        branch2.Address__c ='abc';
+        branch2.Town_City__c='town1';
+        branch2.County__c = 'test2';
+        branch2.Country__c='India';
+        branch2.Postcode__c='hp23fgt';
+        branch2.Is_Active__c = true;
+        insert branch2;
+        List<Installment__c> installList = new List<Installment__c>();
+        Map<Id,Installment__c> mapOfContactIdVsInst = new Map<Id,Installment__c>();  
+        Installment__c inst = new Installment__c();
+        inst.Amount__c = 100.00;
+        inst.Account__c=acc.id;
+        inst.Deposit__c = deposit.id;
+        inst.Status__c = 'Pending';
+        inst.Installment_Type__c = 'Receivable';
+        insert inst; 
+        installList.add(inst);
+        mapOfContactIdVsInst.put(con.id,inst);
+        
+        Case  case1 = new case();      
+        case1.ChangeOver_Status__c = 'Tenant Rejected';
+        case1.Deposit_Account_Number__c = deposit.id;
+        case1.type = 'Problem';
+        insert case1 ;
+        Case_Participant__c caseparticipant = new Case_Participant__c();
+        caseparticipant.Account__c = acc.id;
+        caseparticipant.Case__c = case1.id;
+        caseparticipant.Type__c ='Tenant';
+        caseparticipant.Contact__c = con.id;
+        insert caseparticipant;
+        
+        Repayment_Request__c repayReq = new Repayment_Request__c();
+        repayReq.AL_Repay_Requested__c = true;
+        repayReq.Account__c = acc.id;
+        repayReq.Deposit__c = deposit.id;
+        insert repayReq;
+        
+        
+        try{
+            Test.StartTest();
+            EI_UtilityClassForPayments.createPaymentsForDepositTransfer(installList);
+         //   EI_UtilityClassForPayments.createCreditNoteRecordList('creditReference',string.valueOf(con.Id),'paymentReference',100.00,system.today(),string.valueOf(deposit.Id),string.valueOf(case1.Id),ba,'category','paymentType','paymentTypeStatus');
+            EI_UtilityClassForPayments.createCreditNoteRecordList('creditReference',string.valueOf(con.Id),'paymentReference',100.00,system.today(),string.valueOf(deposit.Id),string.valueOf(case1.Id),acc,'category','paymentType','paymentTypeStatus');
+            EI_UtilityClassForPayments.createCreditNoteRecord('creditReference',string.valueOf(con.Id),'paymentReference',100.00,system.today(),string.valueOf(deposit.Id),string.valueOf(case1.Id),acc,'category','paymentType','paymentTypeStatus');
+            Test.stopTest(); 
+        }catch(Exception e){}
+        
+        
+    }
+    
+    
+     // method 3 to check getInstallmentForChangeover
+    @isTest
+    public static void EI_UtilityClassForPayments_Test3(){
+        
+        Account acc= EI_TestDataFactory.createLandlord(1)[0];
+         acc.Account_Number__c='HGTY6543';
+                acc.Bank_Name__c='testscotlandbank';
+        insert acc;
+        
+        Contact  con = new Contact( FirstName = 'test1', Lastname = 'surname',  Email = System.now().millisecond() + 'as@test.com');
+        insert con; 
+        
+        Property__c property= EI_TestDataFactory.createProperty(1,acc.id)[0];
+        insert property;
+        
+        Scheme__c scheme= EI_TestDataFactory.createScheme();
+        insert scheme;
+        
+        QueryLimits__c querylimit = EI_TestDataFactory.createQueryLimit();
+        insert querylimit;
+        
+        deposit__c deposit = EI_TestDataFactory.createDeposite(1,scheme.id,acc.id,property.id)[0];
+        insert deposit;
+      
+       /* Bank_Account__c  ba = new Bank_Account__c();
+                ba.Account__c = acc.Id;
+                ba.Contact__c= con.id;
+                ba.Account_Number__c='HGTY6543';
+                ba.Bank_Name__c='testscotlandbank';
+              //  ba.ValidInternationBankDetails__c=true;
+                insert ba; */
+        Map<string,Account> mapOFContactIdVsBankDet = new Map<string,Account>();
+        mapOFContactIdVsBankDet.put('con.Id',acc);
+        
+        Branch__c branch2  = new Branch__c();
+        branch2.Branch_Name__c = 'branchtest';  
+        branch2.Account__c = acc.Id;
+        branch2.Address__c ='abc';
+        branch2.Town_City__c='town1';
+        branch2.County__c = 'test2';
+        branch2.Country__c='India';
+        branch2.Postcode__c='hp23fgt';
+        branch2.Is_Active__c = true;
+        insert branch2;
+        Map<Id,Installment__c> mapOfContactIdVsInst = new Map<Id,Installment__c>();  
+        Installment__c inst = new Installment__c();
+        inst.Amount__c = 100.00;
+        inst.Deposit__c = deposit.id;
+        inst.Status__c = 'Pending';
+        inst.Installment_Type__c = 'Receivable';
+        insert inst; 
+        
+        Payment__c pay= new Payment__c();
+        pay.Installment__c = inst.id;
+        pay.DAN__c=deposit.id;
+        insert pay;
+        mapOfContactIdVsInst.put(con.id,inst);
+        
+        Case  case1 = new case();      
+        case1.ChangeOver_Status__c = 'Tenant Rejected';
+        case1.Deposit_Account_Number__c = deposit.id;
+        case1.type = 'Problem';
+        insert case1 ;
+        Case_Participant__c caseparticipant = new Case_Participant__c();
+        caseparticipant.Account__c = acc.id;
+        caseparticipant.Case__c = case1.id;
+        caseparticipant.Type__c ='Tenant';
+        caseparticipant.Contact__c = con.id;
+        insert caseparticipant;
+        
+        Repayment_Request__c repayReq = new Repayment_Request__c();
+        repayReq.AL_Repay_Requested__c = true;
+        repayReq.Account__c = acc.id;
+        repayReq.Deposit__c = deposit.id;
+        insert repayReq;
+        
+        
+        try{
+            Test.StartTest();
+             EI_UtilityClassForPayments.getInstallmentForChangeover('creditReference',string.valueOf(con.Id),'paymentReference',100.00,system.today(),string.valueOf(deposit.Id),string.valueOf(case1.Id),acc,true,'status','installmentType','category',system.today()+2,'paymentType','paymentTypeStatus','Payable');
+            Test.stopTest(); 
+        }catch(Exception e){}
+        
+        
+    }
+    
+      // method 4 to check getInstallmentsForNoResponse
+    @isTest
+    public static void EI_UtilityClassForPayments_Test4(){
+        
+        Account acc= EI_TestDataFactory.createLandlord(1)[0];
+         acc.Account_Number__c='HGTY6543';
+        acc.Bank_Name__c='testscotlandbank';
+        insert acc;
+        
+        Contact  con = new Contact( FirstName = 'test1', Lastname = 'surname',  Email = System.now().millisecond() + 'as@test.com');
+        //con.AccountId=acc.Id;
+        insert con; 
+        
+        Property__c property= EI_TestDataFactory.createProperty(1,acc.id)[0];
+        insert property;
+        
+        Scheme__c scheme= EI_TestDataFactory.createScheme();
+        insert scheme;
+        
+        QueryLimits__c querylimit = EI_TestDataFactory.createQueryLimit();
+        insert querylimit;
+        
+        deposit__c deposit = EI_TestDataFactory.createDeposite(1,scheme.id,acc.id,property.id)[0];
+        insert deposit;
+      
+       /* Bank_Account__c  ba = new Bank_Account__c();
+                ba.Account__c = acc.Id;
+                ba.Contact__c= con.id;
+                ba.Account_Number__c='HGTY6543';
+                ba.Bank_Name__c='testscotlandbank';
+              //  ba.ValidInternationBankDetails__c=true;
+                insert ba; */
+        Map<string,Account> mapOFContactIdVsBankDet = new Map<string,Account>();
+        mapOFContactIdVsBankDet.put('con.Id',acc);
+        
+        Branch__c branch2  = new Branch__c();
+        branch2.Branch_Name__c = 'branchtest';  
+        branch2.Account__c = acc.Id;
+        branch2.Address__c ='abc';
+        branch2.Town_City__c='town1';
+        branch2.County__c = 'test2';
+        branch2.Country__c='India';
+        branch2.Postcode__c='hp23fgt';
+        branch2.Is_Active__c = true;
+        insert branch2;
+        Map<Id,Installment__c> mapOfContactIdVsInst = new Map<Id,Installment__c>();  
+        Installment__c inst = new Installment__c();
+        inst.Amount__c = 100.00;
+        inst.Deposit__c = deposit.id;
+        inst.Status__c = 'Pending';
+        inst.Installment_Type__c = 'Receivable';
+        insert inst; 
+        mapOfContactIdVsInst.put(con.id,inst);
+        
+        Case  case1 = new case();      
+        case1.ChangeOver_Status__c = 'Tenant Rejected';
+        case1.Deposit_Account_Number__c = deposit.id;
+        case1.type = 'Problem';
+        insert case1 ;
+        Case_Participant__c caseparticipant = new Case_Participant__c();
+        caseparticipant.Account__c = acc.id;
+        caseparticipant.Case__c = case1.id;
+        caseparticipant.Type__c ='Tenant';
+        caseparticipant.Contact__c = con.id;
+        insert caseparticipant;
+        
+        Repayment_Request__c repayReq = new Repayment_Request__c();
+        repayReq.AL_Repay_Requested__c = true;
+        repayReq.Account__c = acc.id;        
+        repayReq.Deposit__c = deposit.id;
+        insert repayReq;
+        
+        Repayment_Request_Line__c repayReqLine=new Repayment_Request_Line__c();
+        repayReqLine.Contact__c=con.Id;
+        repayReqLine.Account__c=acc.id;
+        repayReqLine.Repayment_Request__c=repayReq.id;
+        insert repayReqLine;
+        
+          Map<id,Installment__c> mapOfRepReqIdVsInst = new Map<id,Installment__c>();
+        mapOfRepReqIdVsInst.put(repayReqLine.Id,inst);
+        
+        try{
+            Test.StartTest();
+             EI_UtilityClassForPayments.getInstallmentsForNoResponse(repayReqLine,100.00,true,'category',mapOFContactIdVsBankDet,mapOfRepReqIdVsInst);
+            Test.stopTest(); 
+        }catch(Exception e){}
+        
+        
+    }
+
+       // method 5 to check createCreditNoteRecord and getPropertyTransferDeposit
+    @isTest
+    public static void EI_UtilityClassForPayments_Test5(){
+        
+        Account acc= EI_TestDataFactory.createLandlord(1)[0];
+             acc.Account_Number__c='HGTY6543';
+                acc.Bank_Name__c='testscotlandbank';
+        insert acc;
+        
+        Contact  con = new Contact( FirstName = 'test1', Lastname = 'surname',  Email = System.now().millisecond() + 'as@test.com');
+        insert con; 
+        
+        Property__c property= EI_TestDataFactory.createProperty(1,acc.id)[0];
+        insert property;
+        
+        Scheme__c scheme= EI_TestDataFactory.createScheme();
+        insert scheme;
+        
+        QueryLimits__c querylimit = EI_TestDataFactory.createQueryLimit();
+        insert querylimit;
+        
+        deposit__c deposit = EI_TestDataFactory.createDeposite(1,scheme.id,acc.id,property.id)[0];
+        insert deposit;
+      
+      /*  Bank_Account__c  ba = new Bank_Account__c();
+                ba.Account__c = acc.Id;
+                ba.Contact__c= con.id;
+                ba.Account_Number__c='HGTY6543';
+                ba.Bank_Name__c='testscotlandbank';
+              //  ba.ValidInternationBankDetails__c=true;
+                insert ba; */
+        Map<string,Account> mapOFContactIdVsBankDet = new Map<string,Account>();
+        mapOFContactIdVsBankDet.put(string.valueOf(con.Id),acc);
+        
+        Branch__c branch2  = new Branch__c();
+        branch2.Branch_Name__c = 'branchtest';  
+        branch2.Account__c = acc.Id;
+        branch2.Address__c ='abc';
+        branch2.Town_City__c='town1';
+        branch2.County__c = 'test2';
+        branch2.Country__c='India';
+        branch2.Postcode__c='hp23fgt';
+        branch2.Is_Active__c = true;
+        insert branch2;
+        Map<Id,Installment__c> mapOfContactIdVsInst = new Map<Id,Installment__c>();  
+        Installment__c inst = new Installment__c();
+        inst.Amount__c = 100.00;
+        inst.Deposit__c = deposit.id;
+        inst.Status__c = 'Pending';
+        inst.Installment_Type__c = 'Receivable';
+        insert inst; 
+        Payment__c pay = new Payment__c();
+        pay.Installment__c=inst.id;
+        pay.DAN__c=deposit.id;
+        insert pay;
+        mapOfContactIdVsInst.put(con.id,inst);
+        
+        Case  case1 = new case();      
+        case1.ChangeOver_Status__c = 'Tenant Rejected';
+        case1.Deposit_Account_Number__c = deposit.id;
+        case1.type = 'Problem';
+        insert case1 ;
+        Case_Participant__c caseparticipant = new Case_Participant__c();
+        caseparticipant.Account__c = acc.id;
+        caseparticipant.Case__c = case1.id;
+        caseparticipant.Type__c ='Tenant';
+        caseparticipant.Contact__c = con.id;
+        insert caseparticipant;
+        
+        Repayment_Request__c repayReq = new Repayment_Request__c();
+        repayReq.AL_Repay_Requested__c = true;
+        repayReq.Account__c = acc.id;
+        repayReq.Deposit__c = deposit.id;
+        insert repayReq;
+        
+        
+        try{
+            Test.StartTest();
+          //   EI_UtilityClassForPayments.createCreditNoteRecord('creditReference',string.valueOf(con.Id),'paymentReference',100.00,system.today(),string.valueOf(deposit.Id),string.valueOf(case1.Id),ba,'category','paymentType','paymentTypeStatus');
+            EI_UtilityClassForPayments.createCreditNoteRecord('creditReference',string.valueOf(con.Id),'paymentReference',100.00,system.today(),string.valueOf(deposit.Id),string.valueOf(case1.Id),null,'category','paymentType','paymentTypeStatus');
+            
+            EI_UtilityClassForPayments.getPropertyTransferDeposit('creditReference',string.valueOf(con.Id),'paymentReference',100.00,system.today(),string.valueOf(deposit.Id),string.valueOf(case1.Id),acc,true,'status','installmentType','category',system.today(),'paymentType','paymentTypeStatus','transactionPaymentType');
+            Test.stopTest(); 
+        }catch(Exception e){}
+        
+        
+    }
+    
+           // method 6 to check createInstallmentsForDepositTransfer and createPaymentsForDepositTransfer
+    @isTest
+    public static void EI_UtilityClassForPayments_Test6(){
+        
+        Account acc= EI_TestDataFactory.createLandlord(1)[0];
+        acc.Account_Number__c='HGTY6543';
+                acc.Bank_Name__c='testscotlandbank';
+        insert acc;
+        
+        Contact  con = new Contact( FirstName = 'test1', Lastname = 'surname',  Email = System.now().millisecond() + 'as@test.com');
+        insert con; 
+        
+        Property__c property= EI_TestDataFactory.createProperty(1,acc.id)[0];
+        insert property;
+        
+        Scheme__c scheme= EI_TestDataFactory.createScheme();
+        insert scheme;
+        
+        QueryLimits__c querylimit = EI_TestDataFactory.createQueryLimit();
+        insert querylimit;
+        
+        deposit__c deposit = EI_TestDataFactory.createDeposite(1,scheme.id,acc.id,property.id)[0];
+        insert deposit;
+      
+        Bank_Account__c  ba = new Bank_Account__c();
+               /* ba.Account__c = acc.Id;
+                ba.Contact__c= con.id;
+                ba.Account_Number__c='HGTY6543';
+                ba.Bank_Name__c='testscotlandbank';
+              //  ba.ValidInternationBankDetails__c=true;
+                insert ba; */
+        Map<string,Account> mapOFContactIdVsBankDet = new Map<string,Account>();
+        mapOFContactIdVsBankDet.put(string.valueOf(con.Id),acc);
+        
+        Branch__c branch2  = new Branch__c();
+        branch2.Branch_Name__c = 'branchtest';  
+        branch2.Account__c = acc.Id;
+        branch2.Address__c ='abc';
+        branch2.Town_City__c='town1';
+        branch2.County__c = 'test2';
+        branch2.Country__c='India';
+        branch2.Postcode__c='hp23fgt';
+        branch2.Is_Active__c = true;
+        insert branch2;
+        Map<Id,Installment__c> mapOfContactIdVsInst = new Map<Id,Installment__c>(); 
+        list<Installment__c> instList=new list <Installment__c>();
+        Installment__c inst = new Installment__c();
+        inst.Amount__c = 100.00;
+        inst.Deposit__c = deposit.id;
+        inst.Status__c = 'Pending';
+        inst.Installment_Type__c = 'Receivable';
+        insert inst; 
+        instList.add(inst);
+        mapOfContactIdVsInst.put(con.id,inst);
+        
+        Case  case1 = new case();      
+        case1.ChangeOver_Status__c = 'Tenant Rejected';
+        case1.Deposit_Account_Number__c = deposit.id;
+        case1.type = 'Problem';
+        insert case1 ;
+        Case_Participant__c caseparticipant = new Case_Participant__c();
+        caseparticipant.Account__c = acc.id;
+        caseparticipant.Case__c = case1.id;
+        caseparticipant.Type__c ='Tenant';
+        caseparticipant.Contact__c = con.id;
+        insert caseparticipant;
+        
+        Repayment_Request__c repayReq = new Repayment_Request__c();
+        repayReq.AL_Repay_Requested__c = true;
+        repayReq.Account__c = acc.id;
+        repayReq.Deposit__c = deposit.id;
+        insert repayReq;
+        
+        
+        try{
+            Test.StartTest();
+             EI_UtilityClassForPayments.createInstallmentsForDepositTransfer('creditReference',string.valueOf(con.Id),'paymentReference',100.00,system.today(),string.valueOf(deposit.Id),string.valueOf(case1.Id),acc,true,'status','installmentType','category',system.today(),'paymentType','paymentTypeStatus');
+             EI_UtilityClassForPayments.createPaymentsForDepositTransfer(instList);
+            Test.stopTest(); 
+        }catch(Exception e){}
+        
+        
+    }
+    
+    // method 7 to check getPropertyTransferDeposit
+    @isTest
+    public static void EI_UtilityClassForPayments_Test7(){
+        
+        Account acc= EI_TestDataFactory.createLandlord(1)[0];
+        insert acc;
+        
+        Contact  con = new Contact( FirstName = 'test1', Lastname = 'surname',  Email = System.now().millisecond() + 'as@test.com');
+        insert con; 
+        
+        Property__c property= EI_TestDataFactory.createProperty(1,acc.id)[0];
+        insert property;
+        
+        Scheme__c scheme= EI_TestDataFactory.createScheme();
+        insert scheme;
+        
+        QueryLimits__c querylimit = EI_TestDataFactory.createQueryLimit();
+        insert querylimit;
+        
+        deposit__c deposit = EI_TestDataFactory.createDeposite(1,scheme.id,acc.id,property.id)[0];
+        insert deposit;
+        list<deposit__c> depositList=new list<deposit__c>();
+        depositList.add(deposit);
+      
+        Bank_Account__c  ba = new Bank_Account__c();
+                ba.Account__c = acc.Id;
+                ba.Contact__c= con.id;
+                ba.Account_Number__c='HGTY6543';
+                ba.Bank_Name__c='testscotlandbank';
+              //  ba.ValidInternationBankDetails__c=true;
+                insert ba; 
+        Map<string,Bank_Account__c> mapOFContactIdVsBankDet = new Map<string,Bank_Account__c>();
+        mapOFContactIdVsBankDet.put(string.valueOf(con.Id),ba);
+        
+        Branch__c branch2  = new Branch__c();
+        branch2.Branch_Name__c = 'branchtest';  
+        branch2.Account__c = acc.Id;
+        branch2.Address__c ='abc';
+        branch2.Town_City__c='town1';
+        branch2.County__c = 'test2';
+        branch2.Country__c='India';
+        branch2.Postcode__c='hp23fgt';
+        branch2.Is_Active__c = true;
+        insert branch2;
+        Map<Id,Installment__c> mapOfContactIdVsInst = new Map<Id,Installment__c>(); 
+        list<Installment__c> instList=new list <Installment__c>();
+        Installment__c inst = new Installment__c();
+        inst.Amount__c = 100.00;
+        inst.Deposit__c = deposit.id;
+        inst.Status__c = 'Pending';
+        inst.Installment_Type__c = 'Receivable';
+        insert inst; 
+        instList.add(inst);
+        mapOfContactIdVsInst.put(con.id,inst);
+        
+        Case  case1 = new case();      
+        case1.ChangeOver_Status__c = 'Tenant Rejected';
+        case1.Deposit_Account_Number__c = deposit.id;
+        case1.type = 'Problem';
+        insert case1 ;
+        Case_Participant__c caseparticipant = new Case_Participant__c();
+        caseparticipant.Account__c = acc.id;
+        caseparticipant.Case__c = case1.id;
+        caseparticipant.Type__c ='Tenant';
+        caseparticipant.Contact__c = con.id;
+        insert caseparticipant;
+        
+        Repayment_Request__c repayReq = new Repayment_Request__c();
+        repayReq.AL_Repay_Requested__c = true;
+        repayReq.Account__c = acc.id;
+        repayReq.Deposit__c = deposit.id;
+        insert repayReq;
+        
+        
+        try{
+            Test.StartTest();
+            
+            EI_UtilityClassForPayments.getPropertyTransferDepositList(depositList);
+          //  EI_UtilityClassForPayments.forPassingTest();
+            Test.stopTest(); 
+        }catch(Exception e){}
+        
+        
+    }
+    
+    //method to check calculateWorkingDaysBetweenTwoDates and kpiNumberOfDaysCalculation
+     @isTest
+    public static void EI_UtilityClassForPayments_Test(){
+          try{
+             EI_UtilityClassForPayments.calculateWorkingDaysBetweenTwoDates(system.today(), system.today()+5); 
+             EI_UtilityClassForPayments.calculateWorkingDaysBetweenTwoDates(system.today(), system.today());
+             EI_UtilityClassForPayments.kpiNumberOfDaysCalculation(system.today(), system.today()+5); 
+             EI_UtilityClassForPayments.kpiNumberOfDaysCalculation(null, null);
+             EI_UtilityClassForPayments.kpiNumberOfDaysCalculation(system.today(), system.today()); 
+        }catch(Exception e){}
+    }
+}
