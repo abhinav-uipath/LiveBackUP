@@ -1,0 +1,2 @@
+select SUM(Amount_1__c) SOA  FROM payment__c  WHERE  RecordType.name='EWI Payment' AND Installment__r.Deposit__r.Name IN ('DAN778190','DAN778191','DAN778192') 
+AND ( NOT Installment__r.Case__r.Dispute_Reference__c LIKE '%test%')
