@@ -1,0 +1,2 @@
+select id,Agent_Branch__c ,Status,  EWI_Skip_SelfResolution_Checkbox__c,Negotiation_Description__c, LastModifiedDate from case where recordtype.name='Dispute EW Insured' and EWI_Skip_SelfResolution_Checkbox__c = true and LastModifiedDate >2024-05-29T23:49:34.000+0000
+ order by LastModifiedDate desc
